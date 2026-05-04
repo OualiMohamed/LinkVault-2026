@@ -3,6 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#080808" />
+    <meta
+      name="description"
+      content="LinkVault — Catalogue de liens personnel, élégant et hors-ligne"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="LinkVault" />
+    <link
+      rel="apple-touch-icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%23080808'/><rect x='55' y='50' width='70' height='80' rx='8' fill='%23e8a849'/><rect x='70' y='63' width='40' height='28' rx='5' fill='%23080808'/><circle cx='90' cy='77' r='7' fill='%23e8a849'/></svg>"
+    />
+    <link
+      rel="manifest"
+      href="data:application/json;base64,eyJuYW1lIjoiTGlua1ZhdWx0Iiwic2hvcnRfbmFtZSI6IkxpbmtWYXVsdCIsImRlc2NyaXB0aW9uIjoiQ2F0YWxvZ3VlIGRlIGxpZW5zIHBlcnNvbm5lbCIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMDgwODA4IiwidGhlbWVfY29sb3IiOiIjZThhODQ5IiwiaWNvbnMiOlt7InNyYyI6ImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDUxMiA1MTInPjxyZWN0IHdpZHRoPSc1MTInIGhlaWdodD0nNTEyJyByeD0nOTYnIGZpbGw9JyMwODA4MDgnLz48cmVjdCB4PScxNzYnIHk9JzE2MCcgd2lkdGg9JzE2MCcgaGVpZ2h0PScxOTInIHJ4PScxNicgZmlsbD0nI2U4YTg0OScvPjxyZWN0IHg9JzIxMCcgeT0nMTkyJyB3aWR0aD0nOTInIGhlaWdodD0nNjAnIHJ4PSc4JyBmaWxsPSclMjMwODA4MDgnLz48Y2lyY2xlIGN4PScyNTYnIGN5PScyMjInIHI9JzE2JyBmaWxsPSclMjNlOGE4NDknLz48L3N2Zz4iLCJzaXplcyI6ImFueSIsInR5cGUiOiJpbWFnZS9zdmcreG1sIiwicHVycG9zZSI6ImFueSBtYXNrYWJsZSJ9XX0="
+    />
+
     <title>LinkVault — Catalogue de liens</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
@@ -1862,6 +1884,11 @@
       // === INIT ===
       load();
       render();
+
+      // === PWA : enregistrement du service worker ===
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      }
     </script>
   </body>
 </html>
