@@ -1,0 +1,1867 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LinkVault — Catalogue de liens</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #080808;
+        --bg-raised: #111111;
+        --bg-card: #151515;
+        --bg-card-hover: #1b1b1b;
+        --fg: #f0ece4;
+        --fg-dim: #a8a29e;
+        --muted: #57534e;
+        --accent: #e8a849;
+        --accent-glow: rgba(232, 168, 73, 0.12);
+        --accent-soft: #c78b30;
+        --danger: #ef4444;
+        --success: #22c55e;
+        --border: #1e1c1a;
+        --border-light: #2e2a26;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        min-height: 100vh;
+      }
+
+      .font-display {
+        font-family: "Syne", sans-serif;
+      }
+
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border-light);
+        border-radius: 3px;
+      }
+
+      /* Fond */
+      .bg-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(
+            ellipse 600px 400px at 10% 5%,
+            rgba(232, 168, 73, 0.05) 0%,
+            transparent 70%
+          ),
+          radial-gradient(
+            ellipse 500px 500px at 90% 85%,
+            rgba(199, 139, 48, 0.03) 0%,
+            transparent 70%
+          );
+      }
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(232, 168, 73, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(232, 168, 73, 0.02) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 260px;
+        min-height: 100vh;
+        background: var(--bg-raised);
+        border-right: 1px solid var(--border);
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 30;
+      }
+
+      .cat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        color: var(--fg-dim);
+        font-size: 14px;
+        position: relative;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .cat-item:hover {
+        background: rgba(232, 168, 73, 0.05);
+        color: var(--fg);
+      }
+      .cat-item.active {
+        background: var(--accent-glow);
+        color: var(--accent);
+        font-weight: 500;
+      }
+      .cat-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 3px;
+        height: 18px;
+        margin-top: -9px;
+        background: var(--accent);
+        border-radius: 0 3px 3px 0;
+      }
+      .cat-count {
+        margin-left: auto;
+        background: var(--border);
+        color: var(--muted);
+        font-size: 11px;
+        padding: 1px 7px;
+        border-radius: 10px;
+        font-weight: 500;
+      }
+      .cat-item.active .cat-count {
+        background: rgba(232, 168, 73, 0.18);
+        color: var(--accent);
+      }
+
+      .cat-del {
+        width: 22px;
+        height: 22px;
+        border-radius: 5px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        margin-left: 2px;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .cat-item:hover .cat-del {
+        display: flex;
+      }
+      .cat-del:hover {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+      }
+
+      /* Main */
+      .main-content {
+        margin-left: 260px;
+        min-height: 100vh;
+        position: relative;
+        z-index: 10;
+      }
+
+      /* Header */
+      .top-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 28px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .search-box {
+        flex: 1;
+        min-width: 180px;
+        max-width: 460px;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 14px 9px 38px;
+        color: var(--fg);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 14px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .search-box:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+      .search-box::placeholder {
+        color: var(--muted);
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+
+      /* Cartes — AUCUN transform, AUCUNE animation CSS, AUCUN pseudo-élément */
+      .link-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        cursor: pointer;
+        position: relative;
+        opacity: 0;
+        transition:
+          background 0.2s,
+          border-color 0.2s,
+          box-shadow 0.2s;
+        display: block;
+        text-decoration: none;
+        color: inherit;
+      }
+      .link-card.show {
+        opacity: 1;
+        transition:
+          opacity 0.35s ease,
+          background 0.2s,
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .link-card:hover {
+        background: var(--bg-card-hover);
+        border-color: var(--border-light);
+        box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+      }
+
+      .link-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+        flex-shrink: 0;
+      }
+
+      .link-actions {
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .link-card:hover .link-actions {
+        opacity: 1;
+      }
+
+      .act-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: var(--bg-raised);
+        color: var(--fg-dim);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+        transition:
+          border-color 0.15s,
+          color 0.15s,
+          background 0.15s;
+      }
+      .act-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-glow);
+      }
+      .act-btn.del:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .cat-badge {
+        font-size: 11px;
+        padding: 2px 9px;
+        border-radius: 20px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* Boutons */
+      .btn-accent {
+        background: var(--accent);
+        color: #080808;
+        border: none;
+        padding: 9px 18px;
+        border-radius: 10px;
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition:
+          background 0.2s,
+          box-shadow 0.2s;
+      }
+      .btn-accent:hover {
+        background: var(--accent-soft);
+        box-shadow: 0 4px 18px rgba(232, 168, 73, 0.25);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--fg-dim);
+        padding: 9px 18px;
+        border-radius: 10px;
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 500;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition:
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .btn-ghost:hover {
+        border-color: var(--fg-dim);
+        color: var(--fg);
+      }
+
+      .view-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        transition:
+          border-color 0.15s,
+          color 0.15s,
+          background 0.15s;
+      }
+      .view-btn.active {
+        background: var(--accent-glow);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .view-btn:hover:not(.active) {
+        border-color: var(--fg-dim);
+        color: var(--fg-dim);
+      }
+
+      /* Stats */
+      .stat-chip {
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 7px 14px;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .stat-num {
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      /* Modal */
+      .modal-bg {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.2s,
+          visibility 0.2s;
+      }
+      .modal-bg.open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-panel {
+        background: var(--bg-raised);
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 28px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      }
+
+      .form-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--fg-dim);
+        margin-bottom: 5px;
+        display: block;
+      }
+      .form-input,
+      .form-select,
+      .form-textarea {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 10px 13px;
+        color: var(--fg);
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 14px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .form-input:focus,
+      .form-select:focus,
+      .form-textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+      .form-select {
+        cursor: pointer;
+        appearance: none;
+      }
+      .form-textarea {
+        resize: vertical;
+        min-height: 64px;
+      }
+
+      /* Toast */
+      .toast-wrap {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .toast {
+        background: var(--bg-raised);
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        padding: 12px 18px;
+        font-size: 13px;
+        color: var(--fg);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        opacity: 0;
+        transition: opacity 0.25s;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .toast.hide {
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      /* Empty state */
+      .empty-box {
+        text-align: center;
+        padding: 70px 20px;
+        color: var(--muted);
+      }
+      .empty-box i {
+        font-size: 44px;
+        margin-bottom: 14px;
+        opacity: 0.25;
+        display: block;
+      }
+
+      /* Vue liste */
+      .list-mode .link-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 18px;
+      }
+      .list-mode .link-desc {
+        display: none;
+      }
+
+      /* Mobile */
+      .mobile-btn {
+        display: none;
+        position: fixed;
+        bottom: 18px;
+        left: 18px;
+        z-index: 40;
+        width: 46px;
+        height: 46px;
+        border-radius: 13px;
+        background: var(--accent);
+        color: #080808;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(232, 168, 73, 0.35);
+        align-items: center;
+        justify-content: center;
+      }
+      .sidebar-mask {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 25;
+        display: none;
+      }
+      .sidebar-mask.on {
+        display: block;
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          left: -270px;
+          transition: left 0.25s;
+          z-index: 50;
+        }
+        .sidebar.open {
+          left: 0;
+        }
+        .main-content {
+          margin-left: 0;
+        }
+        .mobile-btn {
+          display: flex;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .link-card {
+          opacity: 1;
+        }
+        .toast {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-layer"></div>
+    <div class="bg-grid"></div>
+    <div class="sidebar-mask" id="sidebarMask" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div style="padding: 22px 18px 14px">
+        <div style="display: flex; align-items: center; gap: 11px">
+          <div
+            style="
+              width: 36px;
+              height: 36px;
+              background: var(--accent);
+              border-radius: 9px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <i
+              class="fa-solid fa-vault"
+              style="color: #080808; font-size: 16px"
+            ></i>
+          </div>
+          <div>
+            <div
+              class="font-display"
+              style="font-size: 19px; font-weight: 800; line-height: 1"
+            >
+              LinkVault
+            </div>
+            <div
+              style="
+                font-size: 10px;
+                color: var(--muted);
+                letter-spacing: 1.2px;
+                text-transform: uppercase;
+              "
+            >
+              Catalogue
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 0 10px">
+        <div
+          style="
+            padding: 0 6px 7px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            color: var(--muted);
+          "
+        >
+          Categories
+        </div>
+        <div id="catList"></div>
+        <div style="border-top: 1px solid var(--border); margin: 14px 0"></div>
+        <div
+          style="
+            padding: 0 6px 7px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            color: var(--muted);
+          "
+        >
+          Actions
+        </div>
+        <div
+          class="cat-item"
+          onclick="openCatModal()"
+          style="color: var(--accent)"
+        >
+          <i
+            class="fa-solid fa-plus"
+            style="width: 16px; text-align: center; font-size: 13px"
+          ></i>
+          <span>Nouvelle categorie</span>
+        </div>
+        <div class="cat-item" onclick="exportJSON()">
+          <i
+            class="fa-solid fa-download"
+            style="width: 16px; text-align: center; font-size: 13px"
+          ></i>
+          <span>Exporter</span>
+        </div>
+        <div
+          class="cat-item"
+          onclick="document.getElementById('fileIn').click()"
+        >
+          <i
+            class="fa-solid fa-upload"
+            style="width: 16px; text-align: center; font-size: 13px"
+          ></i>
+          <span>Importer</span>
+        </div>
+        <input
+          type="file"
+          id="fileIn"
+          accept=".json"
+          style="display: none"
+          onchange="importJSON(event)"
+        />
+      </div>
+      <div style="position: absolute; bottom: 18px; left: 10px; right: 10px">
+        <div
+          style="
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 14px;
+            text-align: center;
+          "
+        >
+          <div
+            style="font-size: 22px; font-weight: 700; color: var(--accent)"
+            id="totalCount"
+          >
+            0
+          </div>
+          <div
+            style="
+              font-size: 10px;
+              color: var(--muted);
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            "
+          >
+            Liens sauvegardes
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      <header class="top-header">
+        <div
+          style="
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+            max-width: 460px;
+          "
+        >
+          <i
+            class="fa-solid fa-magnifying-glass"
+            style="
+              position: absolute;
+              left: 13px;
+              top: 50%;
+              margin-top: -7px;
+              color: var(--muted);
+              font-size: 13px;
+            "
+          ></i>
+          <input
+            type="text"
+            class="search-box"
+            id="searchBox"
+            placeholder="Rechercher un lien..."
+            oninput="render()"
+          />
+        </div>
+        <div class="header-right">
+          <button
+            class="view-btn active"
+            id="vGrid"
+            onclick="setView('grid')"
+            aria-label="Grille"
+          >
+            <i class="fa-solid fa-grid-2"></i>
+          </button>
+          <button
+            class="view-btn"
+            id="vList"
+            onclick="setView('list')"
+            aria-label="Liste"
+          >
+            <i class="fa-solid fa-list"></i>
+          </button>
+          <div
+            style="
+              width: 1px;
+              height: 22px;
+              background: var(--border);
+              margin: 0 4px;
+            "
+          ></div>
+          <button class="btn-accent" onclick="openLinkModal()">
+            <i class="fa-solid fa-plus"></i> Ajouter un lien
+          </button>
+        </div>
+      </header>
+
+      <div
+        style="padding: 18px 28px 0; display: flex; gap: 9px; flex-wrap: wrap"
+        id="statsBar"
+      ></div>
+
+      <section style="padding: 18px 28px 50px">
+        <div
+          id="grid"
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 13px;
+          "
+        ></div>
+        <div id="emptyBox" class="empty-box" style="display: none">
+          <i class="fa-solid fa-link-slash"></i>
+          <div
+            style="
+              font-size: 17px;
+              font-weight: 600;
+              color: var(--fg-dim);
+              margin-bottom: 5px;
+            "
+          >
+            Aucun lien trouve
+          </div>
+          <div style="font-size: 14px">
+            Ajoutez votre premier lien ou modifiez vos filtres
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <button class="mobile-btn" onclick="toggleSidebar()" aria-label="Menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <!-- Modal lien -->
+    <div
+      class="modal-bg"
+      id="linkModal"
+      onclick="if (event.target === this) closeLinkModal();"
+    >
+      <div class="modal-panel">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+          "
+        >
+          <h2
+            class="font-display"
+            style="font-size: 20px; font-weight: 800"
+            id="linkModalTitle"
+          >
+            Ajouter un lien
+          </h2>
+          <button
+            class="act-btn"
+            onclick="closeLinkModal()"
+            aria-label="Fermer"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form id="linkForm" onsubmit="saveLink(event)">
+          <input type="hidden" id="fId" />
+          <div style="margin-bottom: 14px">
+            <label class="form-label" for="fUrl">URL</label>
+            <input
+              type="url"
+              class="form-input"
+              id="fUrl"
+              placeholder="https://example.com"
+              required
+            />
+          </div>
+          <div style="margin-bottom: 14px">
+            <label class="form-label" for="fTitle">Titre</label>
+            <input
+              type="text"
+              class="form-input"
+              id="fTitle"
+              placeholder="Nom du site"
+              required
+            />
+          </div>
+          <div style="margin-bottom: 14px">
+            <label class="form-label" for="fDesc">Description</label>
+            <textarea
+              class="form-textarea"
+              id="fDesc"
+              placeholder="Courte description (optionnel)"
+            ></textarea>
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 11px;
+              margin-bottom: 22px;
+            "
+          >
+            <div>
+              <label class="form-label" for="fCat">Categorie</label>
+              <div style="position: relative">
+                <select class="form-select" id="fCat" required></select>
+                <i
+                  class="fa-solid fa-chevron-down"
+                  style="
+                    position: absolute;
+                    right: 12px;
+                    top: 50%;
+                    margin-top: -5px;
+                    color: var(--muted);
+                    font-size: 10px;
+                    pointer-events: none;
+                  "
+                ></i>
+              </div>
+            </div>
+            <div>
+              <label class="form-label" for="fFav">Favicon URL</label>
+              <input
+                type="text"
+                class="form-input"
+                id="fFav"
+                placeholder="Auto-detecte"
+              />
+            </div>
+          </div>
+          <div style="display: flex; gap: 9px; justify-content: flex-end">
+            <button type="button" class="btn-ghost" onclick="closeLinkModal()">
+              Annuler
+            </button>
+            <button type="submit" class="btn-accent">
+              <i class="fa-solid fa-check"></i> Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal catégorie -->
+    <div
+      class="modal-bg"
+      id="catModal"
+      onclick="if (event.target === this) closeCatModal();"
+    >
+      <div class="modal-panel" style="max-width: 380px">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+          "
+        >
+          <h2 class="font-display" style="font-size: 18px; font-weight: 800">
+            Nouvelle categorie
+          </h2>
+          <button class="act-btn" onclick="closeCatModal()" aria-label="Fermer">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <form onsubmit="saveCat(event)">
+          <div style="margin-bottom: 14px">
+            <label class="form-label" for="cName">Nom</label>
+            <input
+              type="text"
+              class="form-input"
+              id="cName"
+              placeholder="Ex: Outils de dev"
+              required
+            />
+          </div>
+          <div style="margin-bottom: 14px">
+            <label class="form-label" for="cIcon">Icone</label>
+            <div style="position: relative">
+              <select class="form-select" id="cIcon">
+                <option value="fa-folder">Dossier</option>
+                <option value="fa-code">Code</option>
+                <option value="fa-palette">Palette</option>
+                <option value="fa-music">Musique</option>
+                <option value="fa-gamepad">Jeux</option>
+                <option value="fa-book">Livre</option>
+                <option value="fa-graduation-cap">Education</option>
+                <option value="fa-shopping-bag">Shopping</option>
+                <option value="fa-newspaper">Actualites</option>
+                <option value="fa-wrench">Outils</option>
+                <option value="fa-briefcase">Business</option>
+                <option value="fa-heart">Favoris</option>
+                <option value="fa-star">Etoile</option>
+                <option value="fa-bolt">Eclair</option>
+                <option value="fa-rocket">Fusee</option>
+                <option value="fa-globe">Globe</option>
+              </select>
+              <i
+                class="fa-solid fa-chevron-down"
+                style="
+                  position: absolute;
+                  right: 12px;
+                  top: 50%;
+                  margin-top: -5px;
+                  color: var(--muted);
+                  font-size: 10px;
+                  pointer-events: none;
+                "
+              ></i>
+            </div>
+          </div>
+          <div style="margin-bottom: 22px">
+            <label class="form-label" for="cColor">Couleur</label>
+            <input
+              type="color"
+              id="cColor"
+              value="#e8a849"
+              style="
+                width: 56px;
+                height: 34px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: var(--bg);
+                cursor: pointer;
+                padding: 2px;
+              "
+            />
+          </div>
+          <div style="display: flex; gap: 9px; justify-content: flex-end">
+            <button type="button" class="btn-ghost" onclick="closeCatModal()">
+              Annuler
+            </button>
+            <button type="submit" class="btn-accent">
+              <i class="fa-solid fa-check"></i> Creer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal confirmation -->
+    <div
+      class="modal-bg"
+      id="confirmModal"
+      onclick="if (event.target === this) closeConfirm();"
+    >
+      <div class="modal-panel" style="max-width: 360px; text-align: center">
+        <i
+          class="fa-solid fa-triangle-exclamation"
+          style="
+            font-size: 34px;
+            color: var(--danger);
+            margin-bottom: 14px;
+            display: block;
+          "
+        ></i>
+        <h3
+          style="font-size: 17px; font-weight: 700; margin-bottom: 7px"
+          id="cfTitle"
+        >
+          Confirmer
+        </h3>
+        <p
+          style="font-size: 13px; color: var(--fg-dim); margin-bottom: 22px"
+          id="cfMsg"
+        ></p>
+        <div style="display: flex; gap: 9px; justify-content: center">
+          <button class="btn-ghost" onclick="closeConfirm()">Annuler</button>
+          <button
+            class="btn-accent"
+            style="background: var(--danger)"
+            id="cfBtn"
+            onclick="runConfirm()"
+          >
+            <i class="fa-solid fa-trash"></i> Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toasts -->
+    <div class="toast-wrap" id="toasts"></div>
+
+    <script>
+      const KEY = "linkvault_v2";
+
+      const defaultCats = [
+        {
+          id: "all",
+          name: "Tous les liens",
+          icon: "fa-layer-group",
+          color: "#e8a849",
+          sys: true,
+        },
+        {
+          id: "social",
+          name: "Reseaux sociaux",
+          icon: "fa-share-nodes",
+          color: "#3b82f6",
+        },
+        {
+          id: "video",
+          name: "Video & Streaming",
+          icon: "fa-play",
+          color: "#ef4444",
+        },
+        { id: "music", name: "Musique", icon: "fa-music", color: "#22c55e" },
+        { id: "dev", name: "Developpement", icon: "fa-code", color: "#a855f7" },
+        { id: "design", name: "Design", icon: "fa-palette", color: "#ec4899" },
+        { id: "tools", name: "Outils", icon: "fa-wrench", color: "#f59e0b" },
+        {
+          id: "news",
+          name: "Actualites",
+          icon: "fa-newspaper",
+          color: "#06b6d4",
+        },
+        { id: "other", name: "Autres", icon: "fa-globe", color: "#6b7280" },
+      ];
+
+      const defaultLinks = [
+        {
+          id: "l1",
+          url: "https://facebook.com",
+          title: "Facebook",
+          desc: "Reseau social principal de Meta",
+          category: "social",
+          favicon: "",
+        },
+        {
+          id: "l2",
+          url: "https://twitter.com",
+          title: "X (Twitter)",
+          desc: "Micro-blogging et actualites en temps reel",
+          category: "social",
+          favicon: "",
+        },
+        {
+          id: "l3",
+          url: "https://instagram.com",
+          title: "Instagram",
+          desc: "Photos, stories et reels",
+          category: "social",
+          favicon: "",
+        },
+        {
+          id: "l4",
+          url: "https://youtube.com",
+          title: "YouTube",
+          desc: "La plus grande plateforme video du monde",
+          category: "video",
+          favicon: "",
+        },
+        {
+          id: "l5",
+          url: "https://tiktok.com",
+          title: "TikTok",
+          desc: "Videos courtes et tendances virales",
+          category: "video",
+          favicon: "",
+        },
+        {
+          id: "l6",
+          url: "https://twitch.tv",
+          title: "Twitch",
+          desc: "Streams de jeux et divertissement en direct",
+          category: "video",
+          favicon: "",
+        },
+        {
+          id: "l7",
+          url: "https://spotify.com",
+          title: "Spotify",
+          desc: "Streaming musical et podcasts",
+          category: "music",
+          favicon: "",
+        },
+        {
+          id: "l8",
+          url: "https://github.com",
+          title: "GitHub",
+          desc: "Hebergement de code et collaboration open-source",
+          category: "dev",
+          favicon: "",
+        },
+        {
+          id: "l9",
+          url: "https://developer.mozilla.org",
+          title: "MDN Web Docs",
+          desc: "Documentation web de reference pour les devs",
+          category: "dev",
+          favicon: "",
+        },
+        {
+          id: "l10",
+          url: "https://figma.com",
+          title: "Figma",
+          desc: "Outil de design collaboratif en ligne",
+          category: "design",
+          favicon: "",
+        },
+        {
+          id: "l11",
+          url: "https://dribbble.com",
+          title: "Dribbble",
+          desc: "Inspiration design et portfolios creatifs",
+          category: "design",
+          favicon: "",
+        },
+        {
+          id: "l12",
+          url: "https://notion.so",
+          title: "Notion",
+          desc: "Workspace tout-en-un pour notes et projets",
+          category: "tools",
+          favicon: "",
+        },
+        {
+          id: "l13",
+          url: "https://reddit.com",
+          title: "Reddit",
+          desc: "Communautes et discussions sur tous les sujets",
+          category: "social",
+          favicon: "",
+        },
+        {
+          id: "l14",
+          url: "https://discord.com",
+          title: "Discord",
+          desc: "Chat vocal et textuel pour communautes",
+          category: "social",
+          favicon: "",
+        },
+      ];
+
+      const platforms = [
+        {
+          r: /facebook\.com|fb\.com/i,
+          i: "fa-brands fa-facebook-f",
+          c: "#1877F2",
+          n: "Facebook",
+        },
+        {
+          r: /youtube\.com|youtu\.be/i,
+          i: "fa-brands fa-youtube",
+          c: "#FF0000",
+          n: "YouTube",
+        },
+        {
+          r: /tiktok\.com/i,
+          i: "fa-brands fa-tiktok",
+          c: "#00f2ea",
+          n: "TikTok",
+        },
+        {
+          r: /twitter\.com|x\.com/i,
+          i: "fa-brands fa-x-twitter",
+          c: "#ffffff",
+          n: "X",
+        },
+        {
+          r: /instagram\.com/i,
+          i: "fa-brands fa-instagram",
+          c: "#E4405F",
+          n: "Instagram",
+        },
+        {
+          r: /linkedin\.com/i,
+          i: "fa-brands fa-linkedin-in",
+          c: "#0A66C2",
+          n: "LinkedIn",
+        },
+        {
+          r: /github\.com/i,
+          i: "fa-brands fa-github",
+          c: "#ffffff",
+          n: "GitHub",
+        },
+        {
+          r: /twitch\.tv/i,
+          i: "fa-brands fa-twitch",
+          c: "#9146FF",
+          n: "Twitch",
+        },
+        {
+          r: /discord\.(com|gg)/i,
+          i: "fa-brands fa-discord",
+          c: "#5865F2",
+          n: "Discord",
+        },
+        {
+          r: /spotify\.com/i,
+          i: "fa-brands fa-spotify",
+          c: "#1DB954",
+          n: "Spotify",
+        },
+        {
+          r: /reddit\.com/i,
+          i: "fa-brands fa-reddit-alien",
+          c: "#FF4500",
+          n: "Reddit",
+        },
+        { r: /figma\.com/i, i: "fa-brands fa-figma", c: "#F24E1E", n: "Figma" },
+        {
+          r: /dribbble\.com/i,
+          i: "fa-brands fa-dribbble",
+          c: "#EA4C89",
+          n: "Dribbble",
+        },
+        {
+          r: /behance\.net/i,
+          i: "fa-brands fa-behance",
+          c: "#1769FF",
+          n: "Behance",
+        },
+        {
+          r: /medium\.com/i,
+          i: "fa-brands fa-medium",
+          c: "#ffffff",
+          n: "Medium",
+        },
+        {
+          r: /stack(overflow|exchange)\.com/i,
+          i: "fa-brands fa-stack-overflow",
+          c: "#F48024",
+          n: "Stack Overflow",
+        },
+        { r: /npmjs\.com/i, i: "fa-brands fa-npm", c: "#CB3837", n: "npm" },
+        {
+          r: /codepen\.io/i,
+          i: "fa-brands fa-codepen",
+          c: "#ffffff",
+          n: "CodePen",
+        },
+        { r: /slack\.com/i, i: "fa-brands fa-slack", c: "#E01E5A", n: "Slack" },
+        {
+          r: /patreon\.com/i,
+          i: "fa-brands fa-patreon",
+          c: "#FF424D",
+          n: "Patreon",
+        },
+        {
+          r: /t\.me|telegram\.org/i,
+          i: "fa-brands fa-telegram",
+          c: "#26A5E4",
+          n: "Telegram",
+        },
+        {
+          r: /whatsapp\.com/i,
+          i: "fa-brands fa-whatsapp",
+          c: "#25D366",
+          n: "WhatsApp",
+        },
+        {
+          r: /pinterest\./i,
+          i: "fa-brands fa-pinterest-p",
+          c: "#BD081C",
+          n: "Pinterest",
+        },
+        {
+          r: /snapchat\.com/i,
+          i: "fa-brands fa-snapchat",
+          c: "#FFFC00",
+          n: "Snapchat",
+        },
+        {
+          r: /vimeo\.com/i,
+          i: "fa-brands fa-vimeo-v",
+          c: "#1AB7EA",
+          n: "Vimeo",
+        },
+        {
+          r: /soundcloud\.com/i,
+          i: "fa-brands fa-soundcloud",
+          c: "#FF5500",
+          n: "SoundCloud",
+        },
+        {
+          r: /netflix\.com/i,
+          i: "fa-solid fa-film",
+          c: "#E50914",
+          n: "Netflix",
+        },
+        { r: /amazon\./i, i: "fa-brands fa-amazon", c: "#FF9900", n: "Amazon" },
+        {
+          r: /google\.com/i,
+          i: "fa-brands fa-google",
+          c: "#4285F4",
+          n: "Google",
+        },
+        { r: /apple\.com/i, i: "fa-brands fa-apple", c: "#ffffff", n: "Apple" },
+        {
+          r: /microsoft\.com/i,
+          i: "fa-brands fa-microsoft",
+          c: "#00A4EF",
+          n: "Microsoft",
+        },
+      ];
+
+      let S = {
+        cats: [],
+        links: [],
+        active: "all",
+        view: "grid",
+        confirmFn: null,
+      };
+
+      function load() {
+        try {
+          const d = JSON.parse(localStorage.getItem(KEY));
+          if (d && d.cats) {
+            if (!d.cats.find((c) => c.id === "all"))
+              d.cats.unshift(defaultCats[0]);
+            S.cats = d.cats;
+            S.links = d.links || [];
+          } else {
+            S.cats = [...defaultCats];
+            S.links = [...defaultLinks];
+            save();
+          }
+        } catch {
+          S.cats = [...defaultCats];
+          S.links = [...defaultLinks];
+          save();
+        }
+      }
+
+      function save() {
+        localStorage.setItem(
+          KEY,
+          JSON.stringify({ cats: S.cats, links: S.links }),
+        );
+      }
+
+      function uid() {
+        return (
+          "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
+        );
+      }
+
+      function esc(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function getCat(id) {
+        return S.cats.find((c) => c.id === id);
+      }
+
+      function detect(url) {
+        for (const p of platforms) if (p.r.test(url)) return p;
+        return null;
+      }
+
+      function linkInfo(link) {
+        if (link.favicon)
+          return {
+            icon: `<img src="${esc(link.favicon)}" alt="" style="width:22px;height:22px;border-radius:4px;" onerror="this.outerHTML='<i class=\\'fa-solid fa-globe\\'></i>'">`,
+            color: "#e8a849",
+            name: "Site web",
+          };
+        const p = detect(link.url);
+        return p
+          ? { icon: `<i class="${p.i}"></i>`, color: p.c, name: p.n }
+          : {
+              icon: '<i class="fa-solid fa-globe"></i>',
+              color: "#e8a849",
+              name: "Site web",
+            };
+      }
+
+      function filtered() {
+        const q = document
+          .getElementById("searchBox")
+          .value.toLowerCase()
+          .trim();
+        return S.links.filter((l) => {
+          if (S.active !== "all" && l.category !== S.active) return false;
+          if (q)
+            return (
+              l.title.toLowerCase().includes(q) ||
+              l.url.toLowerCase().includes(q) ||
+              (l.desc && l.desc.toLowerCase().includes(q))
+            );
+          return true;
+        });
+      }
+
+      function domain(url) {
+        try {
+          return new URL(url).hostname.replace("www.", "");
+        } catch {
+          return url;
+        }
+      }
+
+      // === RENDER ===
+
+      function renderCats() {
+        const el = document.getElementById("catList");
+        el.innerHTML = "";
+        S.cats.forEach((cat) => {
+          const n =
+            cat.id === "all"
+              ? S.links.length
+              : S.links.filter((l) => l.category === cat.id).length;
+          const d = document.createElement("div");
+          d.className = "cat-item" + (S.active === cat.id ? " active" : "");
+          d.onclick = () => {
+            S.active = cat.id;
+            render();
+            if (window.innerWidth <= 768) toggleSidebar();
+          };
+          const ic = cat.icon.startsWith("fa-brands")
+            ? cat.icon
+            : `fa-solid ${cat.icon}`;
+          d.innerHTML = `<i class="${ic}" style="width:16px;text-align:center;font-size:12px;${cat.sys ? "" : "color:" + cat.color + ";"}"></i><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(cat.name)}</span><span class="cat-count">${n}</span>${cat.sys ? "" : `<button class="cat-del" onclick="event.stopPropagation();askDelCat('${cat.id}')" aria-label="Supprimer"><i class="fa-solid fa-xmark"></i></button>`}`;
+          el.appendChild(d);
+        });
+      }
+
+      function renderLinks() {
+        const list = filtered();
+        const g = document.getElementById("grid");
+        const e = document.getElementById("emptyBox");
+        g.innerHTML = "";
+        g.className = S.view === "list" ? "list-mode" : "";
+        g.style.display = "grid";
+        g.style.gridTemplateColumns =
+          S.view === "grid" ? "repeat(auto-fill,minmax(290px,1fr))" : "1fr";
+        g.style.gap = "13px";
+
+        if (!list.length) {
+          e.style.display = "block";
+          return;
+        }
+        e.style.display = "none";
+
+        list.forEach((link, idx) => {
+          const info = linkInfo(link);
+          const cat = getCat(link.category);
+          const cc = cat ? cat.color : "#6b7280";
+          const cn = cat ? cat.name : "Non clasé";
+          const ci = cat
+            ? cat.icon.startsWith("fa-brands")
+              ? cat.icon
+              : `fa-solid ${cat.icon}`
+            : "fa-solid fa-folder";
+          const dm = domain(link.url);
+          const bg = info.color + "15";
+
+          const a = document.createElement("a");
+          a.href = link.url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.className = "link-card";
+          a.setAttribute("aria-label", "Ouvrir " + link.title);
+
+          a.innerHTML = `
+            <div style="display:flex;align-items:flex-start;gap:13px;position:relative;z-index:1;">
+                <div class="link-icon" style="background:${bg};color:${info.color};">${info.icon}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">${esc(link.title)}</div>
+                    <div style="font-size:11.5px;color:var(--muted);margin-bottom:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px;margin-right:3px;"></i>${esc(dm)}
+                    </div>
+                    <div class="link-desc" style="font-size:12.5px;color:var(--fg-dim);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                        ${link.desc ? esc(link.desc) : '<span style="color:var(--muted);font-style:italic;">Pas de description</span>'}
+                    </div>
+                    <div style="margin-top:9px;">
+                        <span class="cat-badge" style="background:${cc}15;color:${cc};"><i class="${ci}" style="font-size:9px;"></i>${esc(cn)}</span>
+                    </div>
+                </div>
+                <div class="link-actions" style="display:flex;gap:4px;flex-shrink:0;">
+                    <button class="act-btn" onclick="event.preventDefault();event.stopPropagation();editLink('${link.id}')" aria-label="Modifier"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="act-btn del" onclick="event.preventDefault();event.stopPropagation();askDelLink('${link.id}')" aria-label="Supprimer"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`;
+
+          g.appendChild(a);
+
+          // Fade-in via JS seul, aucun transform
+          setTimeout(() => a.classList.add("show"), idx * 35);
+        });
+      }
+
+      function renderStats() {
+        const bar = document.getElementById("statsBar");
+        const top = S.cats
+          .filter((c) => !c.sys)
+          .map((c) => ({
+            ...c,
+            n: S.links.filter((l) => l.category === c.id).length,
+          }))
+          .filter((c) => c.n > 0)
+          .sort((a, b) => b.n - a.n)
+          .slice(0, 5);
+        bar.innerHTML = top
+          .map((c) => {
+            const ic = c.icon.startsWith("fa-brands")
+              ? c.icon
+              : `fa-solid ${c.icon}`;
+            return `<div class="stat-chip"><i class="${ic}" style="color:${c.color};font-size:12px;"></i><span style="color:var(--fg-dim);">${esc(c.name)}</span><span class="stat-num">${c.n}</span></div>`;
+          })
+          .join("");
+        document.getElementById("totalCount").textContent = S.links.length;
+      }
+
+      function fillCatSelect() {
+        const sel = document.getElementById("fCat");
+        sel.innerHTML = S.cats
+          .filter((c) => !c.sys)
+          .map((c) => `<option value="${c.id}">${esc(c.name)}</option>`)
+          .join("");
+      }
+
+      function render() {
+        renderCats();
+        renderLinks();
+        renderStats();
+      }
+
+      // === LINKS CRUD ===
+
+      function openLinkModal(editId) {
+        document.getElementById("linkForm").reset();
+        document.getElementById("fId").value = "";
+        fillCatSelect();
+        if (editId) {
+          const l = S.links.find((x) => x.id === editId);
+          if (!l) return;
+          document.getElementById("linkModalTitle").textContent =
+            "Modifier le lien";
+          document.getElementById("fId").value = l.id;
+          document.getElementById("fUrl").value = l.url;
+          document.getElementById("fTitle").value = l.title;
+          document.getElementById("fDesc").value = l.desc || "";
+          document.getElementById("fCat").value = l.category;
+          document.getElementById("fFav").value = l.favicon || "";
+        } else {
+          document.getElementById("linkModalTitle").textContent =
+            "Ajouter un lien";
+          if (S.active !== "all")
+            document.getElementById("fCat").value = S.active;
+        }
+        document.getElementById("linkModal").classList.add("open");
+        setTimeout(() => document.getElementById("fUrl").focus(), 80);
+      }
+
+      function closeLinkModal() {
+        document.getElementById("linkModal").classList.remove("open");
+      }
+
+      function saveLink(e) {
+        e.preventDefault();
+        const id = document.getElementById("fId").value;
+        const url = document.getElementById("fUrl").value.trim();
+        const title = document.getElementById("fTitle").value.trim();
+        const desc = document.getElementById("fDesc").value.trim();
+        const category = document.getElementById("fCat").value;
+        const favicon = document.getElementById("fFav").value.trim();
+        if (!url || !title) return;
+
+        if (id) {
+          const idx = S.links.findIndex((l) => l.id === id);
+          if (idx >= 0) {
+            S.links[idx] = {
+              ...S.links[idx],
+              url,
+              title,
+              desc,
+              category,
+              favicon,
+            };
+            toast("Lien modifie", "success");
+          }
+        } else {
+          S.links.unshift({ id: uid(), url, title, desc, category, favicon });
+          toast("Lien ajoute", "success");
+        }
+        save();
+        closeLinkModal();
+        render();
+      }
+
+      function editLink(id) {
+        openLinkModal(id);
+      }
+
+      function askDelLink(id) {
+        const l = S.links.find((x) => x.id === id);
+        if (!l) return;
+        S.confirmFn = () => {
+          S.links = S.links.filter((x) => x.id !== id);
+          save();
+          render();
+          toast("Lien supprime", "danger");
+        };
+        document.getElementById("cfTitle").textContent = "Supprimer ce lien ?";
+        document.getElementById("cfMsg").textContent =
+          `"${l.title}" sera definitivement supprime.`;
+        document.getElementById("confirmModal").classList.add("open");
+      }
+
+      // === CATEGORIES CRUD ===
+
+      function openCatModal() {
+        document.getElementById("cName").value = "";
+        document.getElementById("cIcon").value = "fa-folder";
+        document.getElementById("cColor").value = "#e8a849";
+        document.getElementById("catModal").classList.add("open");
+        setTimeout(() => document.getElementById("cName").focus(), 80);
+      }
+
+      function closeCatModal() {
+        document.getElementById("catModal").classList.remove("open");
+      }
+
+      function saveCat(e) {
+        e.preventDefault();
+        const name = document.getElementById("cName").value.trim();
+        if (!name) return;
+        S.cats.push({
+          id: "cat_" + uid(),
+          name,
+          icon: "fa-solid " + document.getElementById("cIcon").value,
+          color: document.getElementById("cColor").value,
+          sys: false,
+        });
+        save();
+        closeCatModal();
+        render();
+        toast(`Categorie "${name}" creee`, "success");
+      }
+
+      function askDelCat(id) {
+        const c = getCat(id);
+        if (!c) return;
+        const n = S.links.filter((l) => l.category === id).length;
+        S.confirmFn = () => {
+          S.links.forEach((l) => {
+            if (l.category === id) l.category = "other";
+          });
+          S.cats = S.cats.filter((x) => x.id !== id);
+          if (S.active === id) S.active = "all";
+          save();
+          render();
+          toast(`Categorie supprimee`, "danger");
+        };
+        document.getElementById("cfTitle").textContent =
+          "Supprimer cette categorie ?";
+        document.getElementById("cfMsg").textContent =
+          n > 0
+            ? `${n} lien(s) deplaces vers "Autres".`
+            : "Cette categorie est vide.";
+        document.getElementById("confirmModal").classList.add("open");
+      }
+
+      // === CONFIRM ===
+
+      function runConfirm() {
+        if (S.confirmFn) S.confirmFn();
+        closeConfirm();
+      }
+      function closeConfirm() {
+        document.getElementById("confirmModal").classList.remove("open");
+        S.confirmFn = null;
+      }
+
+      // === VIEW ===
+
+      function setView(v) {
+        S.view = v;
+        document
+          .getElementById("vGrid")
+          .classList.toggle("active", v === "grid");
+        document
+          .getElementById("vList")
+          .classList.toggle("active", v === "list");
+        renderLinks();
+      }
+
+      // === IMPORT/EXPORT ===
+
+      function exportJSON() {
+        const b = new Blob(
+          [JSON.stringify({ cats: S.cats, links: S.links }, null, 2)],
+          { type: "application/json" },
+        );
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(b);
+        a.download = `linkvault_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast("Donnees exportees", "success");
+      }
+
+      function importJSON(ev) {
+        const f = ev.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = (e) => {
+          try {
+            const d = JSON.parse(e.target.result);
+            if (d.cats && d.links) {
+              const ids = new Set(S.cats.map((c) => c.id));
+              d.cats.forEach((c) => {
+                if (!ids.has(c.id)) S.cats.push(c);
+              });
+              const lids = new Set(S.links.map((l) => l.id));
+              let added = 0;
+              d.links.forEach((l) => {
+                if (!lids.has(l.id)) {
+                  S.links.push(l);
+                  added++;
+                }
+              });
+              save();
+              render();
+              toast(`${added} lien(s) importe(s)`, "success");
+            } else toast("Fichier invalide", "danger");
+          } catch {
+            toast("Erreur de lecture", "danger");
+          }
+        };
+        r.readAsText(f);
+        ev.target.value = "";
+      }
+
+      // === SIDEBAR MOBILE ===
+
+      function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("open");
+        document.getElementById("sidebarMask").classList.toggle("on");
+      }
+
+      // === TOAST ===
+
+      function toast(msg, type) {
+        const icons = {
+          success: "fa-circle-check",
+          danger: "fa-circle-xmark",
+          info: "fa-circle-info",
+        };
+        const colors = {
+          success: "#22c55e",
+          danger: "#ef4444",
+          info: "#e8a849",
+        };
+        const t = document.createElement("div");
+        t.className = "toast";
+        t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}" style="color:${colors[type] || colors.info};"></i><span>${esc(msg)}</span>`;
+        document.getElementById("toasts").appendChild(t);
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => t.classList.add("show")),
+        );
+        setTimeout(() => {
+          t.classList.remove("show");
+          t.classList.add("hide");
+          setTimeout(() => t.remove(), 250);
+        }, 2600);
+      }
+
+      // === KEYBOARD ===
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeLinkModal();
+          closeCatModal();
+          closeConfirm();
+        }
+      });
+
+      // === INIT ===
+      load();
+      render();
+    </script>
+  </body>
+</html>
